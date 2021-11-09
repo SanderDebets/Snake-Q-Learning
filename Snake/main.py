@@ -106,13 +106,28 @@ class Food(object):
 
 class QlearningAgent():
     def __init__(self):
-        self.actions = ["up", "down", "left", "right", "nothing"]
+        self.actions = ["up", "down", "left", "right"]
         self.currentAction = random.choice(self.actions)
         self.score = 0
+        self.stored_positions = []
+        self.values = []
+        self.state_index = 0
 
-    def chooseAction(self):
+    def choose_action(self):
         self.currentAction = random.choice(self.actions)  # right now we just choose a random action, here we should implement the q learning algorithm
 
+    def store_positions(self, food_position, snake_positions):
+        combined = [food_position, snake_positions]
+        print([food_position, snake_positions] in self.stored_positions)
+        self.stored_positions.append(combined)
+
+        # if [food_position, snake_positions] in self.stored_positions:
+        #     # this state has been seen before, find its index
+        #     print("test")
+        # else:
+        #     # this state hasn't been seen before, add it to the list
+        #     self.stored_positions.append([food_position, snake_positions])
+        #     #print(self.stored_positions)
 
 def main():
     pygame.init()
@@ -133,24 +148,34 @@ def main():
         drawGrid(surface)
         if mode == "Human-Controlled":
             snake.handle_keys()
+            print(snake.positions)
         elif mode == "Qlearning":
-            agent.chooseAction()
+            #print(snake.positions)
+            agent.store_positions(food.position, snake.positions)
+            agent.choose_action()
             snake.handle_AI_action(agent.currentAction)
         head_position = snake.get_head_position()
         dir_x, dir_y = snake.direction
         new_head_position = (head_position[0] + dir_x, head_position[1] + dir_y)
         if new_head_position[0] >= GRID_WIDTH or new_head_position[0] < 0 or new_head_position[1] >= GRID_HEIGHT or new_head_position[1] < 0:
+            # the chosen action gets a -100 penalty
             snake.reset()
             agent.score -= 50
         elif snake.length > 2 and new_head_position in snake.positions[1:]:  # originally this was self.positions[2:]
+            # the chosen action gets a -100 penalty
             snake.reset()
             agent.score -= 50
         else:
             snake.move(new_head_position)
-        if snake.get_head_position() == food.position:
-            snake.length += 1
-            agent.score += 1
-            food.randomize_position(snake)
+            if snake.get_head_position() == food.position:
+                # the chosen action gets a +1 reward
+                snake.length += 1
+                agent.score += 1
+                food.randomize_position(snake)
+            else:
+                # the snake survived, it gets a -1 penalty, this is to prevent it from just turning in circles
+                agent.score -= 1
+
         snake.draw(surface)
         food.draw(surface)
         window.blit(surface, (0, 0))
