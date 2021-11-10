@@ -37,13 +37,13 @@ class Snake(object):
         return self.positions[0]
 
     def move(self, new_head_position):
-
         self.positions.insert(0, new_head_position)
         if len(self.positions) > self.length:  # is this if statement needed
             self.positions.pop()
 
     def turn(self, direction):
-        if self.length > 1 and (direction[0] * -1, direction[1] * -1) == self.direction:  # prevent the snake from going backwards
+        if self.length > 1 and (
+        direction[0] * -1, direction[1] * -1) == self.direction:  # prevent the snake from going backwards
             return
         else:
             self.direction = direction
@@ -52,7 +52,7 @@ class Snake(object):
         for part in self.positions:
             rect = pygame.Rect((part[0] * GRIDSIZE, part[1] * GRIDSIZE), (GRIDSIZE, GRIDSIZE))
             pygame.draw.rect(surface, self.color, rect)  # drawing snake part
-            #pygame.draw.rect(surface, (93, 216, 228), rect, 1)  # not sure what this line does
+            # pygame.draw.rect(surface, (93, 216, 228), rect, 1)  # not sure what this line does
 
     def reset(self):
         self.length = 1
@@ -88,6 +88,7 @@ class Snake(object):
         elif action == "right":
             self.turn(RIGHT)
 
+
 class Food(object):
     def __init__(self):
         self.position = (random.randint(0, int(GRID_WIDTH) - 1), random.randint(0, int(GRID_HEIGHT) - 1))
@@ -104,7 +105,8 @@ class Food(object):
             new_position = (random.randint(0, int(GRID_WIDTH) - 1), random.randint(0, int(GRID_HEIGHT) - 1))
         self.position = new_position
 
-class QlearningAgent():
+
+class QlearningAgent:
     def __init__(self):
         self.actions = ["up", "down", "left", "right"]
         self.currentAction = random.choice(self.actions)
@@ -114,7 +116,8 @@ class QlearningAgent():
         self.state_index = 0
 
     def choose_action(self):
-        self.currentAction = random.choice(self.actions)  # right now we just choose a random action, here we should implement the q learning algorithm
+        self.currentAction = random.choice(self.actions)  # right now we just choose a random action, here we should
+        # implement the q learning algorithm
 
     def store_positions(self, food_position, snake_positions):
         combined = [food_position, snake_positions]
@@ -128,6 +131,7 @@ class QlearningAgent():
         #     # this state hasn't been seen before, add it to the list
         #     self.stored_positions.append([food_position, snake_positions])
         #     #print(self.stored_positions)
+
 
 def main():
     pygame.init()
@@ -145,19 +149,24 @@ def main():
 
     while True:
         clock.tick(10)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
         drawGrid(surface)
         if mode == "Human-Controlled":
             snake.handle_keys()
             print(snake.positions)
         elif mode == "Qlearning":
-            #print(snake.positions)
+            # print(snake.positions)
             agent.store_positions(food.position, snake.positions)
             agent.choose_action()
             snake.handle_AI_action(agent.currentAction)
         head_position = snake.get_head_position()
         dir_x, dir_y = snake.direction
         new_head_position = (head_position[0] + dir_x, head_position[1] + dir_y)
-        if new_head_position[0] >= GRID_WIDTH or new_head_position[0] < 0 or new_head_position[1] >= GRID_HEIGHT or new_head_position[1] < 0:
+        if new_head_position[0] >= GRID_WIDTH or new_head_position[0] < 0 or new_head_position[1] >= GRID_HEIGHT or \
+                new_head_position[1] < 0:
             # the chosen action gets a -100 penalty
             snake.reset()
             agent.score -= 50
