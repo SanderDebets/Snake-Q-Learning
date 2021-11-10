@@ -84,40 +84,40 @@ def main():
     food = Food()
     agent = QlearningAgent()
 
-    # for i in range(1, 20):
-    #     random_food_position = (random.randrange(1, 30), random.randrange(1, 30))
-    #     random_snake_position = (random.randrange(1, 30), random.randrange(1, 30))
-    #     agent.store_positions(random_food_position, random_snake_position)
+    for i in range(1, 20):
+        random_food_position = (random.randrange(1, 30), random.randrange(1, 30))
+        random_snake_position = (random.randrange(1, 30), random.randrange(1, 30))
+        agent.store_positions(random_food_position, random_snake_position)
 
-    while True:
-        clock.tick(10)
-    #     next_action = random.choice(["up", "down", "left", "right"])
-    #     dir_x = 0
-    #     dir_y = 0
-    #     if next_action == "up":
-    #         dir_x = 0
-    #         dir_y = -1
-    #     elif next_action == "down":
-    #         dir_x = 0
-    #         dir_y = 1
-    #     elif next_action == "left":
-    #         dir_x = -1
-    #         dir_y = 0
-    #     elif next_action == "right":
-    #         dir_x = 1
-    #         dir_y = 0
+    # while True:
+    #     clock.tick(10)
+    # #     next_action = random.choice(["up", "down", "left", "right"])
+    # #     dir_x = 0
+    # #     dir_y = 0
+    # #     if next_action == "up":
+    # #         dir_x = 0
+    # #         dir_y = -1
+    # #     elif next_action == "down":
+    # #         dir_x = 0
+    # #         dir_y = 1
+    # #     elif next_action == "left":
+    # #         dir_x = -1
+    # #         dir_y = 0
+    # #     elif next_action == "right":
+    # #         dir_x = 1
+    # #         dir_y = 0
+    # #     head_position = snake.get_head_position()
+    # #     new_head_position = (head_position[0] + dir_x, head_position[1] + dir_y)
+    # #     snake.move(new_head_position)
+    # #     agent.store_positions(food.position, snake.positions)
+    #
+    #     next_action = agent.choose_action()
+    #     snake.handle_AI_action(next_action)
     #     head_position = snake.get_head_position()
+    #     dir_x, dir_y = snake.direction
     #     new_head_position = (head_position[0] + dir_x, head_position[1] + dir_y)
     #     snake.move(new_head_position)
     #     agent.store_positions(food.position, snake.positions)
-
-        next_action = agent.choose_action()
-        snake.handle_AI_action(next_action)
-        head_position = snake.get_head_position()
-        dir_x, dir_y = snake.direction
-        new_head_position = (head_position[0] + dir_x, head_position[1] + dir_y)
-        snake.move(new_head_position)
-        agent.store_positions(food.position, snake.positions)
 
 
 main()
