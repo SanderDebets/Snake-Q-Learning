@@ -1,3 +1,5 @@
+import math
+
 import pygame
 import sys
 import random
@@ -130,6 +132,7 @@ class QlearningAgent:
         self.append = True
         self.epsilon = 0.9
 
+
     def choose_action(self):
         if np.random.random() < self.epsilon:  # use the q learning algoritm
             options = [self.rewards[self.current_state_index][1], self.rewards[self.current_state_index][3],
@@ -177,6 +180,10 @@ class QlearningAgent:
                 self.rewards[self.current_state_index][7] += reward
 
 
+    def distance_to_food(self, food_position, snake_positions):
+        # print(snake_positions[0][0] - food_position[0])
+        return math.sqrt(pow(snake_positions[0][0] - food_position[0], 2) + pow(snake_positions[0][1] - food_position[1], 2))
+
 
 
 
@@ -195,7 +202,10 @@ def main():
     food = Food()
     agent = QlearningAgent()
 
+    distance = agent.distance_to_food(food.position, snake.positions)
+
     while True:
+        previous_distance = distance
         clock.tick(14400)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -222,6 +232,7 @@ def main():
             snake.reset()
             agent.store_rewards(-100)
         else:
+            distance = agent.distance_to_food(food.position, snake.positions)
             snake.move(new_head_position)
             if snake.get_head_position() == food.position:
                 # the chosen action gets a +1 reward
@@ -231,6 +242,12 @@ def main():
             else:
                 # the snake survived, it gets a -1 penalty, this is to prevent it from just turning in circles
                 agent.store_rewards(-1)
+            # print("previous distance: " + str(previous_distance))
+            # print("new distance: " + str(distance))
+            if distance < previous_distance:  # incentivizing the snake to go towards the food
+                agent.store_rewards(20)
+            elif distance > previous_distance:
+                agent.store_rewards(-20)
 
         snake.draw(surface)
         food.draw(surface)
