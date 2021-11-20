@@ -37,9 +37,12 @@ class Snake(object):
         return self.positions[0]
 
     def move(self, new_head_position):
-        self.positions.insert(0, new_head_position)
+        # self.positions.insert(0, new_head_position)
+        self.positions = [new_head_position] + self.positions
+
         if len(self.positions) > self.length:  # is this if statement needed
             self.positions.pop()
+
 
     def turn(self, direction):
         if self.length > 1 and (
@@ -61,17 +64,22 @@ class Snake(object):
 
     def handle_keys(self):
         for event in pygame.event.get():
+            print("test")
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
+                    print("omhoog")
                     self.turn(UP)
                 elif event.key == pygame.K_DOWN:
+                    print("omlaag")
                     self.turn(DOWN)
                 elif event.key == pygame.K_LEFT:
+                    print("links")
                     self.turn(LEFT)
                 elif event.key == pygame.K_RIGHT:
+                    print("rechts")
                     self.turn(RIGHT)
 
     def handle_AI_action(self, action):
@@ -84,7 +92,7 @@ class Snake(object):
         elif action == "down":
             self.turn(DOWN)
         elif action == "left":
-            self.turn(RIGHT)
+            self.turn(LEFT)
         elif action == "right":
             self.turn(RIGHT)
 
@@ -106,31 +114,71 @@ class Food(object):
         self.position = new_position
 
 
+
 class QlearningAgent:
     def __init__(self):
         self.actions = ["up", "down", "left", "right"]
         self.currentAction = random.choice(self.actions)
         self.score = 0
         self.stored_positions = []
-        self.values = []
-        self.state_index = 0
+        self.left_rewards = []
+        self.right_rewards = []
+        self.up_rewards = []
+        self.down_rewards = []
+        self.rewards = [["left", 0, "right", 0, "down", 0, "up", 0]]
+        self.current_state_index = 0
+        self.append = True
+        self.epsilon = 0.9
 
     def choose_action(self):
-        self.currentAction = random.choice(self.actions)  # right now we just choose a random action, here we should
-        # implement the q learning algorithm
+        if np.random.random() < self.epsilon:  # use the q learning algoritm
+            options = [self.rewards[self.current_state_index][1], self.rewards[self.current_state_index][3],
+                       self.rewards[self.current_state_index][5], self.rewards[self.current_state_index][7]]
+            choice = np.argmax(options)
+            self.currentAction = self.actions[choice]
+        else:  # sometimes we choose randomly, this is to promote exploration
+            self.currentAction = random.choice(self.actions)
+
+
 
     def store_positions(self, food_position, snake_positions):
         combined = [food_position, snake_positions]
-        print([food_position, snake_positions] in self.stored_positions)
-        self.stored_positions.append(combined)
+        # print(combined in self.stored_positions)
+        # print(combined)
 
-        # if [food_position, snake_positions] in self.stored_positions:
-        #     # this state has been seen before, find its index
-        #     print("test")
-        # else:
-        #     # this state hasn't been seen before, add it to the list
-        #     self.stored_positions.append([food_position, snake_positions])
-        #     #print(self.stored_positions)
+        if combined in self.stored_positions:
+            # this state has been seen before, find its index
+            self.current_state_index = self.stored_positions.index(combined)
+            self.append = False
+        else:
+            # this state hasn't been seen before, add it to the list
+            self.current_state_index = len(self.stored_positions) # this line is probably not needed
+            self.stored_positions.append([food_position, snake_positions])
+            self.append = True
+
+    def store_rewards(self, reward: int):
+        if self.append:
+            if self.currentAction == "left":
+                self.rewards.append(["left", reward, "right", 0, "down", 0, "up", 0])
+            elif self.currentAction == "right":
+                self.rewards.append(["left", 0, "right", reward, "down", 0, "up", 0])
+            elif self.currentAction == "down":
+                self.rewards.append(["left", 0, "right", 0, "down", reward, "up", 0])
+            elif self.currentAction == "up":
+                self.rewards.append(["left", 0, "right", 0, "down", 0, "up", reward])
+        elif not self.append:
+            if self.currentAction == "left":
+                self.rewards[self.current_state_index][1] += reward
+            elif self.currentAction == "right":
+                self.rewards[self.current_state_index][3] += reward
+            elif self.currentAction == "down":
+                self.rewards[self.current_state_index][5] += reward
+            elif self.currentAction == "up":
+                self.rewards[self.current_state_index][7] += reward
+
+
+
+
 
 
 def main():
@@ -148,15 +196,14 @@ def main():
     agent = QlearningAgent()
 
     while True:
-        clock.tick(10)
+        clock.tick(14400)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
         drawGrid(surface)
-        if mode == "Human-Controlled":
+        if mode == "Human-Controlled":  # currently broken, pygame doesnt want to detect keys
             snake.handle_keys()
-            print(snake.positions)
         elif mode == "Qlearning":
             # print(snake.positions)
             agent.store_positions(food.position, snake.positions)
@@ -167,23 +214,23 @@ def main():
         new_head_position = (head_position[0] + dir_x, head_position[1] + dir_y)
         if new_head_position[0] >= GRID_WIDTH or new_head_position[0] < 0 or new_head_position[1] >= GRID_HEIGHT or \
                 new_head_position[1] < 0:
-            # the chosen action gets a -100 penalty
+            # snake goes outside border, the chosen action gets a -100 penalty
             snake.reset()
-            agent.score -= 50
+            agent.store_rewards(-100)
         elif snake.length > 2 and new_head_position in snake.positions[1:]:  # originally this was self.positions[2:]
-            # the chosen action gets a -100 penalty
+            # snake crashes into itself, the chosen action gets a -100 penalty
             snake.reset()
-            agent.score -= 50
+            agent.store_rewards(-100)
         else:
             snake.move(new_head_position)
             if snake.get_head_position() == food.position:
                 # the chosen action gets a +1 reward
                 snake.length += 1
-                agent.score += 1
+                agent.store_rewards(1)
                 food.randomize_position(snake)
             else:
                 # the snake survived, it gets a -1 penalty, this is to prevent it from just turning in circles
-                agent.score -= 1
+                agent.store_rewards(-1)
 
         snake.draw(surface)
         food.draw(surface)
